@@ -19,7 +19,8 @@
       "Bash(kill:*)",
       "WebFetch(domain:marked.js.org)",
       "Bash(xcode-select:*)",
-      "Bash(git -C /Users/feridsabanovic/dev/claude/raytracer remote set-url:*)"
+      "Bash(git -C /Users/feridsabanovic/dev/claude/raytracer remote set-url:*)",
+      "Bash(git -C /Users/feridsabanovic/dev/claude/raytracer rm --cached .DS_Store)"
     ]
   }
 }
