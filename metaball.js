@@ -411,35 +411,22 @@ function marchingCubes(field, res, gridMin, cellSize, threshold) {
 
 // ── Mesh Smoothing ──────────────────────────────────────────────
 
-/** Evaluate the metaball field value at a point. */
-function evalField(px, py, pz, balls) {
-  let val = 0;
+/** Evaluate the metaball field value and gradient at a point in a single pass. */
+function evalFieldAndGradient(px, py, pz, balls) {
+  let val = 0, gx = 0, gy = 0, gz = 0;
   for (let b = 0; b < balls.length; b++) {
     const dx = px - balls[b].x;
     const dy = py - balls[b].y;
     const dz = pz - balls[b].z;
     const dist2 = dx * dx + dy * dy + dz * dz + 0.0001;
-    const r = balls[b].radius;
-    val += (r * r) / dist2;
-  }
-  return val;
-}
-
-/** Compute the field gradient at a point (unnormalized, points outward from surface). */
-function evalGradient(px, py, pz, balls) {
-  let gx = 0, gy = 0, gz = 0;
-  for (let b = 0; b < balls.length; b++) {
-    const dx = px - balls[b].x;
-    const dy = py - balls[b].y;
-    const dz = pz - balls[b].z;
-    const dist2 = dx * dx + dy * dy + dz * dz + 0.0001;
-    const r = balls[b].radius;
-    const factor = -2.0 * r * r / (dist2 * dist2);
+    const r2 = balls[b].radius * balls[b].radius;
+    val += r2 / dist2;
+    const factor = -2.0 * r2 / (dist2 * dist2);
     gx += factor * dx;
     gy += factor * dy;
     gz += factor * dz;
   }
-  return [gx, gy, gz];
+  return { val, gx, gy, gz };
 }
 
 /**
@@ -481,16 +468,15 @@ function smoothMesh(vertices, triangles, balls, threshold, iterations) {
     // Project back onto isosurface along gradient (Newton step)
     for (let i = 0; i < vertices.length; i++) {
       const p = vertices[i];
-      const f = evalField(p[0], p[1], p[2], balls);
-      const g = evalGradient(p[0], p[1], p[2], balls);
-      const gmag2 = g[0] * g[0] + g[1] * g[1] + g[2] * g[2];
+      const fg = evalFieldAndGradient(p[0], p[1], p[2], balls);
+      const gmag2 = fg.gx * fg.gx + fg.gy * fg.gy + fg.gz * fg.gz;
       if (gmag2 < 1e-10) continue;
       // Newton step: move along gradient to reach f = threshold
-      const step = (f - threshold) / gmag2;
+      const step = (fg.val - threshold) / gmag2;
       vertices[i] = [
-        p[0] - g[0] * step,
-        p[1] - g[1] * step,
-        p[2] - g[2] * step,
+        p[0] - fg.gx * step,
+        p[1] - fg.gy * step,
+        p[2] - fg.gz * step,
       ];
     }
   }
@@ -507,20 +493,9 @@ function computeMetaballNormals(vertices, balls) {
   const normals = new Array(vertices.length);
   for (let i = 0; i < vertices.length; i++) {
     const p = vertices[i];
-    let nx = 0, ny = 0, nz = 0;
-    for (let b = 0; b < balls.length; b++) {
-      const dx = p[0] - balls[b].x;
-      const dy = p[1] - balls[b].y;
-      const dz = p[2] - balls[b].z;
-      const dist2 = dx * dx + dy * dy + dz * dz + 0.0001;
-      const r = balls[b].radius;
-      const factor = -2.0 * r * r / (dist2 * dist2);
-      nx += factor * dx;
-      ny += factor * dy;
-      nz += factor * dz;
-    }
-    const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-    normals[i] = [-nx / len, -ny / len, -nz / len]; // negate: gradient points inward, normals point outward
+    const fg = evalFieldAndGradient(p[0], p[1], p[2], balls);
+    const len = Math.sqrt(fg.gx * fg.gx + fg.gy * fg.gy + fg.gz * fg.gz) || 1;
+    normals[i] = [-fg.gx / len, -fg.gy / len, -fg.gz / len]; // negate: gradient points inward, normals point outward
   }
   return normals;
 }

@@ -10,14 +10,14 @@ function fastRand() {
 
 // ── Shadow & AO ────────────────────────────────────────────────
 
-/** Test a single shadow ray against the scene + environment. */
-function shadowRayBlocked(ox, oy, oz, sdx, sdy, sdz, scene, origObjIdx) {
+/** Test if any geometry in the scene occludes a ray within maxDist. */
+function sceneAnyHit(ox, oy, oz, dx, dy, dz, scene, maxDist, skipObj) {
   for (let oi = 0; oi < scene.length; oi++) {
-    if (oi === origObjIdx) continue;
+    if (oi === skipObj) continue;
     const obj = scene[oi];
-    if (bvhAnyHit(ox, oy, oz, sdx, sdy, sdz, obj.bvhNodes, obj.worldVerts, obj.triangles, Infinity)) return true;
+    if (bvhAnyHit(ox, oy, oz, dx, dy, dz, obj.bvhNodes, obj.worldVerts, obj.triangles, maxDist)) return true;
   }
-  if (origObjIdx !== ENV_OBJ_IDX && envAnyHit(ox, oy, oz, sdx, sdy, sdz, 1e30)) return true;
+  if (skipObj !== ENV_OBJ_IDX && envAnyHit(ox, oy, oz, dx, dy, dz, maxDist)) return true;
   return false;
 }
 
@@ -29,7 +29,7 @@ function shadowTest(ox, oy, oz, scene, origObjIdx) {
     const jy = (fastRand() - 0.5) * RT_LIGHT_RADIUS;
     const jz = (fastRand() - 0.5) * RT_LIGHT_RADIUS;
     const sdx = lightDir[0] + jx, sdy = lightDir[1] + jy, sdz = lightDir[2] + jz;
-    if (shadowRayBlocked(ox, oy, oz, sdx, sdy, sdz, scene, origObjIdx)) blocked++;
+    if (sceneAnyHit(ox, oy, oz, sdx, sdy, sdz, scene, Infinity, origObjIdx)) blocked++;
   }
   return blocked / RT_SHADOW_SAMPLES;
 }
@@ -46,24 +46,13 @@ function sampleHemisphere(nx, ny, nz) {
   return d;
 }
 
-/** Test if any geometry in the scene occludes a ray within maxDist. */
-function anyHitWithinDist(ox, oy, oz, dx, dy, dz, scene, maxDist, skipObj) {
-  for (let oi = 0; oi < scene.length; oi++) {
-    if (oi === skipObj) continue;
-    const obj = scene[oi];
-    if (bvhAnyHit(ox, oy, oz, dx, dy, dz, obj.bvhNodes, obj.worldVerts, obj.triangles, maxDist)) return true;
-  }
-  if (skipObj !== ENV_OBJ_IDX && envAnyHit(ox, oy, oz, dx, dy, dz, maxDist)) return true;
-  return false;
-}
-
 /** Ambient occlusion: returns 0 (fully open) to 1 (fully occluded). */
 function aoTest(ox, oy, oz, nx, ny, nz, scene, origObjIdx) {
   let occluded = 0;
   for (let s = 0; s < RT_AO_SAMPLES; s++) {
     const dir = sampleHemisphere(nx, ny, nz);
     if (!dir) continue;
-    if (anyHitWithinDist(ox, oy, oz, dir[0], dir[1], dir[2], scene, RT_AO_RADIUS, origObjIdx)) occluded++;
+    if (sceneAnyHit(ox, oy, oz, dir[0], dir[1], dir[2], scene, RT_AO_RADIUS, origObjIdx)) occluded++;
   }
   return occluded / RT_AO_SAMPLES;
 }
