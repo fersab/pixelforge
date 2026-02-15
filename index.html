@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Screen</title>
+<style>
+  body {
+    margin: 0;
+    background: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    padding-top: calc(50vh - 230px);
+    font-family: monospace;
+    color: #ccc;
+  }
+  h1.site-title {
+    font-size: 26px;
+    color: #e8e8e8;
+    margin: 0 0 32px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    max-width: 720px;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .controls {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 20px;
+  }
+  .controls label {
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .controls input[type="radio"] {
+    cursor: pointer;
+    margin-right: 4px;
+  }
+  .controls button {
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 13px;
+    padding: 2px 12px;
+    background: #444;
+    color: #ccc;
+    border: 1px solid #666;
+  }
+  .controls button:hover {
+    background: #555;
+  }
+  .frame {
+    position: relative;
+    padding: 40px;
+    background: #2c2c2c;
+    border: 2px solid #444;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 0 30px rgba(0,0,0,0.8);
+  }
+  #fps {
+    position: absolute;
+    top: 44px;
+    left: 44px;
+    font-size: 11px;
+    color: #0c0;
+    background: rgba(0,0,0,0.5);
+    padding: 2px 6px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  canvas {
+    display: block;
+    background: #000;
+    image-rendering: pixelated;
+  }
+  .video-wrap {
+    margin-top: 48px;
+    margin-bottom: -40px;
+    width: 360px;
+  }
+  .video-wrap iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: none;
+    border-radius: 4px;
+  }
+
+  /* ── README article ─────────────────────────── */
+  #readme {
+    max-width: 720px;
+    width: 100%;
+    padding: 60px 24px 80px;
+    line-height: 1.7;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  #readme h1 {
+    font-size: 24px;
+    color: #e8e8e8;
+    margin: 0 0 8px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 12px;
+  }
+  #readme h2 {
+    font-size: 19px;
+    color: #e0e0e0;
+    margin: 48px 0 16px;
+    border-bottom: 1px solid #2a2a2a;
+    padding-bottom: 8px;
+  }
+  #readme h3 {
+    font-size: 15px;
+    color: #d0d0d0;
+    margin: 32px 0 12px;
+  }
+  #readme p {
+    margin: 12px 0;
+  }
+  #readme ul, #readme ol {
+    padding-left: 24px;
+    margin: 12px 0;
+  }
+  #readme li {
+    margin: 6px 0;
+  }
+  #readme code {
+    background: #111;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  #readme pre {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 16px 0;
+    line-height: 1.5;
+  }
+  #readme pre code {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+  }
+  #readme hr {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 48px 0;
+  }
+  #readme table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  #readme th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid #444;
+    color: #e0e0e0;
+  }
+  #readme td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  #readme tr:nth-child(even) td {
+    background: rgba(255,255,255,0.02);
+  }
+  #readme strong {
+    color: #e0e0e0;
+  }
+  #readme a {
+    color: #7ab;
+    text-decoration: none;
+  }
+  #readme a:hover {
+    text-decoration: underline;
+  }
+  #readme blockquote {
+    border-left: 3px solid #444;
+    margin: 16px 0;
+    padding: 4px 16px;
+    color: #999;
+  }
+</style>
+</head>
+<body>
+<h1 class="site-title">From Pixels to Raytracing — A 3D Rendering Engine Built with Claude Code in Pure ES6+, Just Math and a Canvas</h1>
+<div class="controls">
+  <label><input type="radio" name="renderMode" value="rasterize" id="rm-rasterize"> Software 3D (raster)</label>
+  <label><input type="radio" name="renderMode" value="raytrace" id="rm-raytrace"> Raytrace (CPU)</label>
+  <label><input type="radio" name="renderMode" value="gpu-raytrace" id="rm-gpu"> Raytrace (GPU calc offloaded)</label>
+  <button id="applyBtn">Apply</button>
+</div>
+<div class="frame">
+  <span id="fps">-- fps</span>
+  <canvas id="screen" width="800" height="420"></canvas>
+</div>
+<div class="video-wrap">
+  <p style="margin:0 0 8px;font-size:11px;color:#777;text-align:center">For nostalgic tunes press Play</p>
+  <iframe src="https://www.youtube.com/embed/lKJlkpdfe9g?modestbranding=1&rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+</div>
+<article id="readme"></article>
+<img id="skyImg" src="sky.jpg" style="display:none">
+<script src="primitives.js"></script>
+<script src="software-render.js"></script>
+<script src="sphere.js"></script>
+<script src="metaball.js"></script>
+<script src="cube.js"></script>
+<script src="floor.js"></script>
+<script src="environment.js"></script>
+<script src="render-common.js"></script>
+<script src="raytrace-common.js"></script>
+<script src="bvh.js"></script>
+<script src="shader-source.js"></script>
+<script src="raytrace.js"></script>
+<script src="gpu-raytrace.js"></script>
+<script src="main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+fetch('README.md')
+  .then(r => r.text())
+  .then(md => {
+    md = md.replace(/^# .+\n+/, '');
+    document.getElementById('readme').innerHTML = marked.parse(md);
+    // Add GitHub-style slug IDs to all headings so anchor links work
+    document.querySelectorAll('#readme h1, #readme h2, #readme h3').forEach(el => {
+      el.id = el.textContent.toLowerCase().replace(/\s*\u2014\s*/g, '--').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
+    });
+  });
+</script>
+</body>
+</html>
