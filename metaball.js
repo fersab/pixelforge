@@ -3,7 +3,7 @@
 // ── Metaball System ──────────────────────────────────────────────
 // Evaluates an implicit field from multiple spherical charges,
 // then extracts a triangle mesh via marching cubes.
-// Output format matches sphereMesh: { vertices: [[x,y,z],...], triangles: [[i,j,k],...] }
+// Output: { vertices: [[x,y,z],...], triangles: [[i,j,k],...], normals: [[nx,ny,nz],...] }
 
 // ── Marching Cubes Lookup Tables ─────────────────────────────────
 // EDGE_TABLE[cubeIndex] = bitmask of which of the 12 edges are crossed

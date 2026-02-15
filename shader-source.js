@@ -421,7 +421,7 @@ vec3 traceRay(vec3 ro, vec3 rd) {
 }
 
 // ── Main ───────────────────────────────────────────────────────
-// 2×2 supersampling: fire AA×AA sub-pixel rays per pixel and average
+// AA×AA supersampling: fire AA×AA sub-pixel rays per pixel and average
 void main() {
   float px = gl_FragCoord.x - 0.5;
   float py = float(SCREEN_H) - 1.0 - gl_FragCoord.y + 0.5;

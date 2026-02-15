@@ -73,8 +73,8 @@ function projectOffset(vx, vy, vz, ox, oy, oz, rc) {
 }
 
 /**
- * Draw a mesh with Phong shading. Pass vertexNormals for smooth shading,
- * or faceNormals for flat shading. Normals are interpolated per-pixel.
+ * Draw a mesh with Blinn-Phong shading. Pass vertexNormals for smooth shading
+ * (normals interpolated per-pixel), or faceNormals for flat shading (constant normal per triangle).
  */
 function drawObject(vertices, triangles, colors, a, x, y, z, vertexNormals, faceNormals) {
   const rc = rotationCache();

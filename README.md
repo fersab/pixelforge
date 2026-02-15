@@ -324,7 +324,7 @@ The fragment shader is a complete reimplementation of the CPU raytracer:
 
 ### Constant Injection
 
-All rendering constants (epsilon values, specular parameters, shadow sample counts, max bounce depth) are defined once in JavaScript (`raytrace-common.js`) and injected into the GLSL source via string replacement before compilation:
+Most rendering constants (epsilon values, specular parameters, max bounce depth, AA grid) are defined once in JavaScript (`raytrace-common.js`) and injected into the GLSL source via string replacement before compilation:
 ```javascript
 fragSrc = FRAG_SRC.replace(/__RT_EPSILON__/g, toGLSLFloat(RT_EPSILON))
                   .replace(/__RT_SHADOW_BIAS__/g, toGLSLFloat(RT_SHADOW_BIAS))
@@ -332,7 +332,7 @@ fragSrc = FRAG_SRC.replace(/__RT_EPSILON__/g, toGLSLFloat(RT_EPSILON))
                   .replace(/__RT_MAX_BOUNCES__/g, RT_MAX_BOUNCES.toString())
                   .replace(/__RT_AA_GRID__/g, RT_AA_GRID.toString());
 ```
-This ensures CPU and GPU paths use identical parameters. `RT_AA_GRID` is declared as `let` (not `const`) so `main.js` can override it from the UI checkbox before the shader compiles.
+This ensures CPU and GPU paths use identical parameters. One exception: shadow sampling — the CPU uses `RT_SHADOW_SAMPLES` random rays while the GPU uses its own hardcoded 4×4 stratified grid (`SHADOW_GRID = 4` in GLSL). `RT_AA_GRID` is declared as `let` (not `const`) so `main.js` can override it from the UI checkbox before the shader compiles.
 
 ### Per-Frame Upload
 
@@ -480,4 +480,4 @@ Starting from a single `putpixel` call and an empty canvas, we built:
 - A **BVH acceleration structure** shared between both raytracers, reducing intersection complexity from O(n) to O(log n)
 - A clean **modular architecture** where each file owns a single responsibility and both rendering backends share construction, constants, and intersection code
 
-All in ~2900 lines of vanilla JavaScript — no build system, no bundler, no dependencies. Just `<script>` tags and math.
+All in ~2850 lines of vanilla JavaScript — no build system, no bundler, no dependencies. Just `<script>` tags and math.
