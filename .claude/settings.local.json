@@ -18,7 +18,8 @@
       "Bash(wc:*)",
       "Bash(kill:*)",
       "WebFetch(domain:marked.js.org)",
-      "Bash(xcode-select:*)"
+      "Bash(xcode-select:*)",
+      "Bash(git -C /Users/feridsabanovic/dev/claude/raytracer remote set-url:*)"
     ]
   }
 }
