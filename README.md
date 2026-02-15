@@ -224,7 +224,7 @@ Both the CPU and GPU raytracers share the same `RT_AA_GRID` constant (1 = off, 2
 
 ## Chapter 7: BVH — Making It Fast
 
-Without acceleration, the CPU raytracer tests every ray against every triangle in every object. With metaballs (~5000–10000 triangles) and a cube (108 triangles), that's ~5000–10000 ray-triangle tests per ray, times 336,000 pixels, times 25 rays per pixel (1 primary + 16 shadow + 8 AO). That's roughly **42–84 billion** intersection tests per frame. Unacceptable.
+Without acceleration, the CPU raytracer tests every ray against every triangle in every object. With metaballs (~5000–10000 triangles) and a cube (108 triangles), that's ~5000–10000 ray-triangle tests per ray, times 336,000 pixels, times 25–100 rays per pixel (1 primary + 16 shadow + 8 AO per hit, and each Fresnel reflection bounce fires another 25). That's roughly **42–336 billion** intersection tests per frame. Unacceptable.
 
 ### The Bounding Volume Hierarchy
 
