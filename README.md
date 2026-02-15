@@ -2,6 +2,8 @@
 
 ## From the First Pixel to BVH-Accelerated GPU Raytracing — No Libraries, No Frameworks
 
+🔗 [github.com/fersab/pixelforge](https://github.com/fersab/pixelforge)
+
 This is the story of building a complete 3D rendering engine in the browser using nothing but plain JavaScript and a single `<canvas>` element. No Three.js. No WebGPU abstractions. Just math, pixels, and a progression from the simplest possible drawing primitive all the way to a GPU-accelerated raytracer with soft shadows, ambient occlusion, and Fresnel reflections.
 
 The engine supports three rendering modes, switchable at runtime:
