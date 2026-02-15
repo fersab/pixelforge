@@ -276,6 +276,8 @@ The BVH is built once per object per frame in `transformMesh()` (inside `raytrac
 
 WebGL2 doesn't have compute shaders. But it does have fragment shaders — programs that run once per pixel. By drawing a single full-screen triangle and making the fragment shader do all the ray tracing, we effectively turn the GPU into a massively parallel ray tracer.
 
+The challenge: serialize an entire BVH tree into an RGBA32F texture so a stateless fragment shader can do O(log n) ray-traversal — with no pointers, no recursion, and no shared memory.
+
 ### The Full-Screen Triangle Trick
 
 The vertex shader generates a triangle that covers the entire screen from just the vertex ID — no vertex buffer needed:
