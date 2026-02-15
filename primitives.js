@@ -71,7 +71,7 @@ function putpixel(x, y, z, r, g, b, a) {
   }
 }
 
-/** Fill a horizontal span with per-pixel Phong lighting. */
+/** Fill a horizontal span with per-pixel Blinn-Phong lighting. */
 function fillSpan(y, xL, zL, nxL, nyL, nzL, xR, zR, nxR, nyR, nzR, r, g, b, a) {
   const xStart = Math.ceil(xL);
   const xEnd = Math.floor(xR);

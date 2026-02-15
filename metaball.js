@@ -1,3 +1,5 @@
+// @ts-check
+
 // ── Metaball System ──────────────────────────────────────────────
 // Evaluates an implicit field from multiple spherical charges,
 // then extracts a triangle mesh via marching cubes.

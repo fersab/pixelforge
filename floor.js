@@ -5,6 +5,8 @@ const FLOOR_Y = 120;
 const FLOOR_TILE = 80;
 const FLOOR_HALF = 6; // tiles in each direction from center
 const FLOOR_Z_OFFSET = 100; // world z offset
+const FLOOR_COLOR_DARK = [180, 30, 30];
+const FLOOR_COLOR_LIGHT = [200, 200, 200];
 
 // Triangle mesh (used by software rasterizer)
 const floorMesh = (function() {
@@ -29,7 +31,7 @@ const floorMesh = (function() {
       triangles.push([vi, vi + 2, vi + 3]);
 
       const isWhite = (ix + iz) & 1;
-      const col = isWhite ? [200, 200, 200] : [180, 30, 30];
+      const col = isWhite ? FLOOR_COLOR_LIGHT : FLOOR_COLOR_DARK;
       colors.push(col);
       colors.push(col);
     }
@@ -38,4 +40,4 @@ const floorMesh = (function() {
   return { vertices, triangles, colors };
 })();
 
-// Analytical floor data now lives in environment.js (environment.floor)
+// Analytical floor data now lives in environment.js (environment._floor)

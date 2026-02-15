@@ -76,15 +76,18 @@ function draw(time) {
   } else if (renderMode === 'raytrace') {
     raytraceScene(t, sceneObjects);
   } else {
-    rotX = 0;
-    rotY = t * 0.3;
-    rotZ = 0;
-    drawObject(mb.vertices, mb.triangles, mb.colors, 255, Math.sin(t * 0.6) * 150, -10 + Math.sin(t * 0.8) * 40, 100 + Math.sin(t * 0.4) * 200, mb.vertexNormals);
+    // Use the same position/rotation functions as the raytracers
+    const mbObj = sceneObjects[0];
+    rotX = mbObj.rx(t);
+    rotY = mbObj.ry(t);
+    rotZ = mbObj.rz(t);
+    drawObject(mb.vertices, mb.triangles, mb.colors, 255, mbObj.x(t), mbObj.y(t), mbObj.z(t), mb.vertexNormals);
 
-    rotX = t * 0.5;
-    rotY = t * 0.7;
-    rotZ = t * 0.3;
-    drawObject(cubeMesh.vertices, cubeMesh.triangles, cubeColors, 255, 80 + Math.sin(t * 0.5) * 60, 20 + Math.sin(t * 0.9) * 30, 200 + Math.cos(t * 0.3) * 100, null, cubeFaceNormals);
+    const cubeObj = sceneObjects[1];
+    rotX = cubeObj.rx(t);
+    rotY = cubeObj.ry(t);
+    rotZ = cubeObj.rz(t);
+    drawObject(cubeMesh.vertices, cubeMesh.triangles, cubeColors, 255, cubeObj.x(t), cubeObj.y(t), cubeObj.z(t), null, cubeFaceNormals);
 
     rotX = 0;
     rotY = 0;

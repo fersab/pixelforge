@@ -12,8 +12,8 @@ const environment = {
   _floor: {
     y: FLOOR_Y,
     tile: FLOOR_TILE,
-    color0: [180, 30, 30],
-    color1: [200, 200, 200],
+    color0: FLOOR_COLOR_DARK,
+    color1: FLOOR_COLOR_LIGHT,
     minX: -FLOOR_HALF * FLOOR_TILE,
     maxX: FLOOR_HALF * FLOOR_TILE,
     minZ: -FLOOR_HALF * FLOOR_TILE + FLOOR_Z_OFFSET,
