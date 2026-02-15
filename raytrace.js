@@ -195,23 +195,39 @@ function traceRay(ox, oy, oz, dx, dy, dz, scene, depth, skipObj) {
   return [Math.min(255, r), Math.min(255, g), Math.min(255, b)];
 }
 
-/** Raytrace the entire scene for one frame. */
+/** Raytrace the entire scene for one frame. Supports RT_AA_GRID×RT_AA_GRID supersampling. */
 function raytraceScene(t, sceneObjects) {
   const scene = buildSceneFromObjects(t, sceneObjects);
 
   const halfW = WIDTH * 0.5;
   const halfH = HEIGHT * 0.5;
+  const aa = RT_AA_GRID;
+  const aaSamples = aa * aa;
+  const aaStep = 1 / aa;
 
   for (let py = 0; py < HEIGHT; py++) {
     for (let px = 0; px < WIDTH; px++) {
-      _shadowSeed = py * WIDTH + px;
-      const rdx = px - halfW;
-      const rdy = py - halfH;
-      const len = Math.sqrt(rdx * rdx + rdy * rdy + fov * fov);
-      const dx = rdx / len, dy = rdy / len, dz = fov / len;
+      let rr = 0, rg = 0, rb = 0;
 
-      const col = traceRay(0, 0, camZ, dx, dy, dz, scene, RT_MAX_BOUNCES, -1);
-      putpixel(px, py, 1e9, col[0], col[1], col[2], 255);
+      for (let ay = 0; ay < aa; ay++) {
+        for (let ax = 0; ax < aa; ax++) {
+          const spx = px + (ax + 0.5) * aaStep - 0.5;
+          const spy = py + (ay + 0.5) * aaStep - 0.5;
+
+          // Unique PRNG seed per sub-sample to decorrelate noise
+          _shadowSeed = (py * aa + ay) * WIDTH * aa + (px * aa + ax);
+
+          const rdx = spx - halfW;
+          const rdy = spy - halfH;
+          const len = Math.sqrt(rdx * rdx + rdy * rdy + fov * fov);
+          const dx = rdx / len, dy = rdy / len, dz = fov / len;
+
+          const col = traceRay(0, 0, camZ, dx, dy, dz, scene, RT_MAX_BOUNCES, -1);
+          rr += col[0]; rg += col[1]; rb += col[2];
+        }
+      }
+
+      putpixel(px, py, 1e9, rr / aaSamples, rg / aaSamples, rb / aaSamples, 255);
     }
   }
 }

@@ -18,13 +18,13 @@ All three render the same animated scene: animated metaballs (blobby shapes that
 
 **Rendering Pipeline** — Double-buffered software framebuffer, z-buffer depth testing, alpha blending, scanline triangle rasterization, perspective projection (pinhole camera)
 
-**Shading & Lighting** — Per-pixel Phong shading, Blinn-Phong specular highlights, smooth vertex normal interpolation (barycentric), flat face normals, Fresnel reflections (Schlick's approximation), recursive ray bouncing (3 deep), soft shadows (16 jittered samples), ambient occlusion (8 hemisphere samples), shadow bias, deterministic per-pixel PRNG
+**Shading & Lighting** — Per-pixel Phong shading, Blinn-Phong specular highlights, smooth vertex normal interpolation (barycentric), flat face normals, Fresnel reflections (Schlick's approximation), recursive ray bouncing (3 deep), soft shadows (16 jittered samples), ambient occlusion (8 hemisphere samples), 2×2 supersampling antialiasing (togglable), shadow bias, deterministic per-pixel PRNG
 
 **Geometry** — Marching cubes isosurface extraction, metaball scalar field evaluation (f = Σ r²/d²), Laplacian mesh smoothing with isosurface projection, analytical gradient normals, edge-based vertex deduplication, per-frame mesh regeneration, procedural mesh generation, analytical infinite floor plane, Euler rotation with cached trigonometry
 
 **Acceleration** — Bounding Volume Hierarchy (BVH) with median split, slab method ray-AABB intersection, Möller-Trumbore ray-triangle intersection, iterative stack-based BVH traversal, any-hit early termination
 
-**GPU Raytracing** — Full-screen triangle trick, data texture packing (RGBA32F), BVH serialization to texture, iterative reflection with weight accumulation, stratified sampling (4×4 shadow grid), GLSL constant injection, texelFetch with bit-shift indexing
+**GPU Raytracing** — Full-screen triangle trick, data texture packing (RGBA32F), BVH serialization to texture, iterative reflection with weight accumulation, stratified sampling (4×4 shadow grid), GLSL constant injection, texelFetch with bit-shift indexing, 2×2 supersampling AA
 
 **Environment** — Sky texture sampling (direction-based lookup), analytical checkerboard pattern
 
@@ -162,7 +162,7 @@ Hard shadows (a single shadow ray) produce unrealistic razor-sharp edges. Soft s
 ```
 shadow = blockedRays / 16
 ```
-The jitter uses a deterministic PRNG (linear congruential generator) seeded per-pixel: `seed = py * WIDTH + px`. This means the noise pattern is spatially varied but temporally stable — the same pixel always gets the same shadow samples, preventing flickering.
+The jitter uses a deterministic PRNG (linear congruential generator) seeded per-pixel: `seed = py * WIDTH + px`. This means the noise pattern is spatially varied but temporally stable — the same pixel always gets the same shadow samples, preventing flickering. When 2×2 supersampling AA is enabled, each sub-sample gets a unique PRNG seed to decorrelate noise across the four sub-pixel rays.
 
 **2. Ambient Occlusion (8 hemisphere samples)**
 
@@ -213,6 +213,12 @@ The fix is to offset the ray origin slightly along the surface normal before tra
 biasedPosition = hitPoint + normal * 0.5
 ```
 This tiny push (0.5 units along the normal) is enough to clear the surface without visibly shifting the shadow position.
+
+### Supersampling Antialiasing (2×2)
+
+Without AA, each pixel fires a single primary ray through its center, producing hard stair-step edges on silhouettes and moiré on the checkerboard floor. With 2×2 supersampling enabled, each pixel fires 4 primary rays at sub-pixel offsets (±0.25 from pixel center) and averages the results. This smooths silhouette edges, shadow boundaries, and distant checkerboard patterns.
+
+Both the CPU and GPU raytracers share the same `RT_AA_GRID` constant (1 = off, 2 = 2×2). When AA is off, the loop runs once per pixel with zero overhead. The toggle is controlled via a checkbox in the UI and persisted in `localStorage`.
 
 ---
 
@@ -314,6 +320,7 @@ The fragment shader is a complete reimplementation of the CPU raytracer:
   accumWeight *= fresnel;
   if (accumWeight < 0.01) break;  // early termination
   ```
+- Same 2×2 supersampling AA (when enabled) — the `main()` function loops over a sub-pixel grid, each sample with a unique PRNG seed, and averages the results
 
 ### Constant Injection
 
@@ -322,9 +329,10 @@ All rendering constants (epsilon values, specular parameters, shadow sample coun
 fragSrc = FRAG_SRC.replace(/__RT_EPSILON__/g, toGLSLFloat(RT_EPSILON))
                   .replace(/__RT_SHADOW_BIAS__/g, toGLSLFloat(RT_SHADOW_BIAS))
                   // ...
-                  .replace(/__RT_MAX_BOUNCES__/g, RT_MAX_BOUNCES.toString());
+                  .replace(/__RT_MAX_BOUNCES__/g, RT_MAX_BOUNCES.toString())
+                  .replace(/__RT_AA_GRID__/g, RT_AA_GRID.toString());
 ```
-This ensures CPU and GPU paths use identical parameters.
+This ensures CPU and GPU paths use identical parameters. `RT_AA_GRID` is declared as `let` (not `const`) so `main.js` can override it from the UI checkbox before the shader compiles.
 
 ### Per-Frame Upload
 
@@ -380,7 +388,7 @@ Each frame, `generateMetaballMesh()` produces the mesh with analytical gradient 
 
 Position and rotation are functions of time `t` (seconds), creating smooth sinusoidal animation. The `requestAnimationFrame` loop drives rendering.
 
-Mode switching is handled by radio buttons. Clicking "Apply" saves the selection to `localStorage` and reloads the page. The GPU mode replaces the 2D canvas with a WebGL2 canvas at initialization.
+Mode switching is handled by radio buttons, and a checkbox toggles 2×2 supersampling AA (off by default). Clicking "Apply" saves both the render mode and AA state to `localStorage` and reloads the page — necessary because the GPU shader's AA grid size is baked in at compile time. The GPU mode replaces the 2D canvas with a WebGL2 canvas at initialization.
 
 ---
 
@@ -410,7 +418,7 @@ Each file has a single clear responsibility. Shared code lives as high up the ch
 - **`primitives.js`**: `cross()`, `normalize()`, camera/lighting globals, rotation state
 - **`metaball.js`**: marching cubes field evaluation, mesh extraction, vertex deduplication, Laplacian smoothing with isosurface projection, analytical gradient normals — self-contained, no project dependencies
 - **`bvh.js`**: all ray-intersection math and BVH construction/traversal — the single source of truth for both CPU and GPU paths
-- **`raytrace-common.js`**: all rendering constants (shadow, AO, specular, bounce depth, metaball grid), mesh transformation — consumed by all three renderers
+- **`raytrace-common.js`**: all rendering constants (shadow, AO, specular, bounce depth, AA grid, metaball grid), mesh transformation — consumed by all three renderers
 - **`environment.js`**: floor and sky abstraction — no raytracing code knows what's in the environment
 
 ---
@@ -451,6 +459,7 @@ Each file has a single clear responsibility. Shared code lives as high up the ch
 | Recursive ray bouncing (RT_MAX_BOUNCES deep) | raytrace.js, shader | Mirror reflections |
 | Shadow bias | raytrace.js, shader | Prevent self-intersection artifacts |
 | Deterministic per-pixel PRNG | raytrace.js, shader | Stable noise for stochastic sampling |
+| 2×2 supersampling AA | raytrace.js, shader | Sub-pixel averaging for smooth edges (togglable) |
 | Full-screen triangle trick | shader-source.js | GPU pixel-parallel execution |
 | Data texture packing (RGBA32F) | gpu-raytrace.js | Scene data on GPU without compute shaders |
 | BVH texture serialization | gpu-raytrace.js | Acceleration structure on GPU |
@@ -471,4 +480,4 @@ Starting from a single `putpixel` call and an empty canvas, we built:
 - A **BVH acceleration structure** shared between both raytracers, reducing intersection complexity from O(n) to O(log n)
 - A clean **modular architecture** where each file owns a single responsibility and both rendering backends share construction, constants, and intersection code
 
-All in ~2800 lines of vanilla JavaScript — no build system, no bundler, no dependencies. Just `<script>` tags and math.
+All in ~2900 lines of vanilla JavaScript — no build system, no bundler, no dependencies. Just `<script>` tags and math.

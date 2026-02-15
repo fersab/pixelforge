@@ -421,21 +421,34 @@ vec3 traceRay(vec3 ro, vec3 rd) {
 }
 
 // ── Main ───────────────────────────────────────────────────────
+// 2×2 supersampling: fire AA×AA sub-pixel rays per pixel and average
 void main() {
   float px = gl_FragCoord.x - 0.5;
   float py = float(SCREEN_H) - 1.0 - gl_FragCoord.y + 0.5;
 
-  prngSeed = uint(int(py) * SCREEN_W + int(px));
-
   float halfW = float(SCREEN_W) * 0.5;
   float halfH = float(SCREEN_H) * 0.5;
-  float rdx = px - halfW;
-  float rdy = py - halfH;
-  float len = sqrt(rdx * rdx + rdy * rdy + u_fov * u_fov);
-  vec3 rd = vec3(rdx / len, rdy / len, u_fov / len);
   vec3 ro = vec3(0.0, 0.0, u_camZ);
 
-  vec3 col = traceRay(ro, rd);
-  fragColor = vec4(clamp(col / 255.0, 0.0, 1.0), 1.0);
+  vec3 colAccum = vec3(0.0);
+  const int AA = __RT_AA_GRID__;
+  float aaStep = 1.0 / float(AA);
+  for (int ay = 0; ay < AA; ay++) {
+    for (int ax = 0; ax < AA; ax++) {
+      float spx = px + (float(ax) + 0.5) * aaStep - 0.5;
+      float spy = py + (float(ay) + 0.5) * aaStep - 0.5;
+
+      // Unique PRNG seed per sub-sample to decorrelate noise
+      prngSeed = uint(int(py) * SCREEN_W * AA * AA + int(px) * AA * AA + ay * AA + ax);
+
+      float rdx = spx - halfW;
+      float rdy = spy - halfH;
+      float len = sqrt(rdx * rdx + rdy * rdy + u_fov * u_fov);
+      vec3 rd = vec3(rdx / len, rdy / len, u_fov / len);
+      colAccum += traceRay(ro, rd);
+    }
+  }
+  colAccum /= float(AA * AA);
+  fragColor = vec4(clamp(colAccum / 255.0, 0.0, 1.0), 1.0);
 }
 `;

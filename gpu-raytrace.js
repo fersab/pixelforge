@@ -119,7 +119,8 @@ function initShaderProgram() {
                            .replace(/__RT_AO_SAMPLES__/g, RT_AO_SAMPLES.toString())
                            .replace(/__RT_AO_RADIUS__/g, toGLSLFloat(RT_AO_RADIUS))
                            .replace(/__RT_AO_STRENGTH__/g, toGLSLFloat(RT_AO_STRENGTH))
-                           .replace(/__RT_MAX_BOUNCES__/g, RT_MAX_BOUNCES.toString());
+                           .replace(/__RT_MAX_BOUNCES__/g, RT_MAX_BOUNCES.toString())
+                           .replace(/__RT_AA_GRID__/g, RT_AA_GRID.toString());
   const vs = compileShader(gl.VERTEX_SHADER, VERT_SRC);
   const fs = compileShader(gl.FRAGMENT_SHADER, fragSrc);
   if (!vs || !fs) return false;

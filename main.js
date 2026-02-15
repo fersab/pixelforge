@@ -6,10 +6,17 @@ const renderMode = localStorage.getItem('renderMode') || 'gpu-raytrace';
 const radio = document.getElementById('rm-' + (renderMode === 'gpu-raytrace' ? 'gpu' : renderMode));
 if (radio) radio.checked = true;
 
+// AA toggle — restore from localStorage and override constant before shader compile
+const aaCheckbox = document.getElementById('aa-toggle');
+const aaEnabled = localStorage.getItem('aaEnabled') === 'true'; // default: off
+aaCheckbox.checked = aaEnabled;
+RT_AA_GRID = aaEnabled ? 2 : 1;
+
 // Apply button — save selection and reload
 document.getElementById('applyBtn').addEventListener('click', function() {
   const selected = document.querySelector('input[name="renderMode"]:checked').value;
   localStorage.setItem('renderMode', selected);
+  localStorage.setItem('aaEnabled', aaCheckbox.checked.toString());
   location.reload();
 });
 

@@ -13,6 +13,7 @@ const RT_AO_SAMPLES = 8;
 const RT_AO_RADIUS = 40;
 const RT_AO_STRENGTH = 0.6;
 const RT_MAX_BOUNCES = 3;
+let RT_AA_GRID = 2;           // NxN supersampling grid (CPU + GPU raytracers): 1 = off, 2 = 2×2 (4 samples)
 const METABALL_GRID_RES = 48;
 const METABALL_THRESHOLD = 1.0;
 
