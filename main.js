@@ -96,31 +96,33 @@ function draw(time) {
   }
 }
 
-// ── FPS counter ───────────────────────────────────────────────
-const fpsEl = document.getElementById('fps');
-let fpsFrames = 0;
-let fpsWindowStart = 0;
+// ── Main loop with FPS counter (closure-scoped) ──────────────
+const mainLoop = (function() {
+  const fpsEl = document.getElementById('fps');
+  let fpsFrames = 0;
+  let fpsWindowStart = 0;
 
-function mainLoop(time) {
-  if (renderMode !== 'gpu-raytrace') {
-    clear();
-    if (renderMode === 'rasterize') drawSkyBackground();
-  }
-  draw(time);
-  if (renderMode !== 'gpu-raytrace') flip();
+  return function mainLoop(time) {
+    if (renderMode !== 'gpu-raytrace') {
+      clear();
+      if (renderMode === 'rasterize') drawSkyBackground();
+    }
+    draw(time);
+    if (renderMode !== 'gpu-raytrace') flip();
 
-  // Update FPS display once per second
-  fpsFrames++;
-  if (!fpsWindowStart) fpsWindowStart = time;
-  const elapsed = time - fpsWindowStart;
-  if (elapsed >= 1000) {
-    fpsEl.textContent = ((fpsFrames * 1000 / elapsed) | 0) + ' fps';
-    fpsFrames = 0;
-    fpsWindowStart = time;
-  }
+    // Update FPS display once per second
+    fpsFrames++;
+    if (!fpsWindowStart) fpsWindowStart = time;
+    const elapsed = time - fpsWindowStart;
+    if (elapsed >= 1000) {
+      fpsEl.textContent = ((fpsFrames * 1000 / elapsed) | 0) + ' fps';
+      fpsFrames = 0;
+      fpsWindowStart = time;
+    }
 
-  requestAnimationFrame(mainLoop);
-}
+    requestAnimationFrame(mainLoop);
+  };
+})();
 
 if (renderMode === 'gpu-raytrace') initGPU();
 requestAnimationFrame(mainLoop);
