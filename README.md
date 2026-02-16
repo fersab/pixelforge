@@ -1,10 +1,16 @@
-# From Pixels to Raytracing — A 3D Rendering Engine Built with Claude Code in Pure ES6+
+# From Pixels to Raytracing — A 3D Rendering Engine Built with Claude Code in Pure ES6+, Just Math and a Canvas
 
 ## From the First Pixel to BVH-Accelerated GPU Raytracing — No Libraries, No Frameworks
 
 🔗 [github.com/fersab/pixelforge](https://github.com/fersab/pixelforge)
 
-This is the story of building a complete 3D rendering engine in the browser using nothing but plain JavaScript and a single `<canvas>` element. No Three.js. No WebGPU abstractions. Just math, pixels, and a progression from the simplest possible drawing primitive all the way to a GPU-accelerated raytracer with soft shadows, ambient occlusion, and Fresnel reflections.
+### Why Claude Code
+
+Most AI-assisted projects you see today are LLM wrappers, CRUD apps, or a handful of frameworks stitched together with API calls. I wanted to push Claude Code in a different direction — heavy algorithmic work, real-time math, and the kind of low-level graphics programming that takes you back to the demoscene. No frameworks, no abstractions, just pixels and linear algebra.
+
+---
+
+So I wanted to build a complete 3D rendering engine in the browser using nothing but plain JavaScript and a single `<canvas>` element. No Three.js. No rendering libraries. Just math, pixels, and a progression from the simplest possible drawing primitive all the way to a GPU-accelerated raytracer with soft shadows, ambient occlusion, and Fresnel reflections.
 
 The engine supports three rendering modes, switchable at runtime:
 
@@ -262,7 +268,7 @@ The `bvhTraverse()` function implements this core loop with a callback pattern. 
 
 ### Ray-Primitive Intersections
 
-**Ray-Triangle** uses the **Moller-Trumbore algorithm**: compute edge vectors, then use cross products and dot products to simultaneously test if the ray intersects the triangle's plane AND if the intersection point is inside the triangle (via barycentric coordinates u, v). Returns null on miss, or `{t, u, v}` on hit. The barycentric coordinates are later used for normal interpolation.
+**Ray-Triangle** uses the **Möller–Trumbore algorithm**: compute edge vectors, then use cross products and dot products to simultaneously test if the ray intersects the triangle's plane AND if the intersection point is inside the triangle (via barycentric coordinates u, v). Returns null on miss, or `{t, u, v}` on hit. The barycentric coordinates are later used for normal interpolation.
 
 **Ray-AABB** uses the **slab method**: for each axis, compute where the ray enters and exits the box. The ray hits the box if and only if the latest entry is before the earliest exit. Handles negative ray directions by swapping min/max when needed.
 
@@ -311,7 +317,7 @@ vec4 fetchTexel(sampler2D tex, int idx) {
 
 The fragment shader is a complete reimplementation of the CPU raytracer:
 
-- Same Moller-Trumbore ray-triangle test
+- Same Möller–Trumbore ray-triangle test
 - Same slab-method AABB test
 - Same BVH traversal with explicit stack (GLSL doesn't support recursion, so the stack is a fixed-size array with a 2048-iteration safety limit)
 - Same soft shadows (16 samples in a 4x4 stratified jitter grid — slightly better noise distribution than the CPU version's uniform random)
@@ -450,7 +456,7 @@ Each file has a single clear responsibility. Shared code lives as high up the ch
 | Checkerboard floor generation | floor.js | Procedural ground plane |
 | Analytical floor plane | environment.js | Infinite-resolution floor for raytracer |
 | Sky texture sampling | environment.js, render-common.js | HDR-like environment lighting |
-| Moller-Trumbore intersection | bvh.js | Fast ray-triangle test |
+| Möller–Trumbore intersection | bvh.js | Fast ray-triangle test |
 | Slab method AABB intersection | bvh.js | Fast ray-box test |
 | BVH construction (median split) | bvh.js | Spatial acceleration structure |
 | Iterative BVH traversal | bvh.js | Stack-based tree walk |
@@ -482,4 +488,4 @@ Starting from a single `putpixel` call and an empty canvas, we built:
 - A **BVH acceleration structure** shared between both raytracers, reducing intersection complexity from O(n) to O(log n)
 - A clean **modular architecture** where each file owns a single responsibility and both rendering backends share construction, constants, and intersection code
 
-All in ~2850 lines of vanilla JavaScript — no build system, no bundler, no dependencies. Just `<script>` tags and math.
+All in ~2600 lines of vanilla JavaScript — no build system, no bundler, no dependencies. Just `<script>` tags and math.

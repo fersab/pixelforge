@@ -98,7 +98,7 @@ vec3 envColor(vec3 rd) {
   return col * 255.0;
 }
 
-// ── Ray-Triangle intersection (Moller-Trumbore) ───────────────
+// ── Ray-Triangle intersection (Möller–Trumbore) ───────────────
 vec3 rayTriIntersect(vec3 ro, vec3 rd, vec3 v0, vec3 v1, vec3 v2) {
   vec3 e1 = v1 - v0;
   vec3 e2 = v2 - v0;
